@@ -5,44 +5,140 @@
  * Based on: Docs/Apps/Middleware/SpecSheet.md § 5.2
  *
  * Endpoints:
- *   GET  /api/models         - Proxy for ollama.list() (cached 5m)
- *   POST /api/chat/init      - Creates a new conversationId
- *   POST /api/chat/stream    - SSE endpoint for streaming chat
- *   POST /api/chat/stop      - Aborts an active stream
- *   POST /api/upload         - File upload (Multer) + background embedding
+ *   GET  /api/models             - List available Ollama models
+ *   POST /api/chat/init          - Create a new conversation
+ *   GET  /api/chat               - List all conversations
+ *   GET  /api/chat/:id           - Get conversation with messages
+ *   POST /api/chat/stream        - SSE streaming chat endpoint
+ *   POST /api/chat/stop          - Abort an active stream
  */
-import { Controller, Get, Post, Body, Param, Sse } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Post,
+    Body,
+    Param,
+    Res,
+    HttpCode,
+    HttpStatus,
+} from '@nestjs/common';
+import { Response } from 'express';
 import { ChatService } from './chat.service';
+import { OllamaWrapper } from '../ollama/ollama.wrapper';
 
-@Controller('chat')
+@Controller()
 export class ChatController {
-    constructor(private readonly chatService: ChatService) { }
+    constructor(
+        private readonly chatService: ChatService,
+        private readonly ollama: OllamaWrapper,
+    ) { }
+
+    // -----------------------------------------------------------------------
+    // Models
+    // -----------------------------------------------------------------------
+
+    /**
+     * GET /api/models
+     * Lists available Ollama models. Proxies ollama.list().
+     */
+    @Get('models')
+    async listModels() {
+        const result = await this.ollama.listModels();
+        return result.models.map((m) => ({
+            name: m.name,
+            size: m.size,
+            modifiedAt: m.modified_at,
+        }));
+    }
+
+    // -----------------------------------------------------------------------
+    // Conversations
+    // -----------------------------------------------------------------------
 
     /**
      * POST /api/chat/init
-     * Creates a new conversation and returns the ID.
+     * Creates a new conversation.
      */
-    @Post('init')
-    async initConversation() {
-        // TODO: Call chatService.createConversation()
-        return { conversationId: 'placeholder-uuid' };
+    @Post('chat/init')
+    @HttpCode(HttpStatus.CREATED)
+    async initConversation(@Body() body: { title?: string }) {
+        const conversation = await this.chatService.createConversation(body?.title);
+        return { conversationId: conversation.id };
     }
+
+    /**
+     * GET /api/chat
+     * Lists all conversations (for the sidebar).
+     */
+    @Get('chat')
+    async listConversations() {
+        return this.chatService.listConversations();
+    }
+
+    /**
+     * GET /api/chat/:id
+     * Gets a single conversation with all its messages.
+     */
+    @Get('chat/:id')
+    async getConversation(@Param('id') id: string) {
+        return this.chatService.getConversation(id);
+    }
+
+    // -----------------------------------------------------------------------
+    // Streaming Chat (SSE)
+    // -----------------------------------------------------------------------
 
     /**
      * POST /api/chat/stream
-     * SSE streaming endpoint. Body: { message, conversationId, model }
+     * The main SSE streaming endpoint.
+     *
+     * Writes Server-Sent Events directly to the response.
+     * Each event is a JSON-encoded StreamPacket.
      */
-    @Post('stream')
-    async streamChat(@Body() body: { message: string; conversationId: string; model?: string }) {
-        // TODO: Implement SSE streaming via chatService
+    @Post('chat/stream')
+    async streamChat(
+        @Body() body: { conversationId: string; message: string; model?: string },
+        @Res() res: Response,
+    ) {
+        // Set SSE headers
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+        res.flushHeaders();
+
+        try {
+            const stream = this.chatService.streamChat(
+                body.conversationId,
+                body.message,
+                body.model ?? 'deepseek-r1',
+            );
+
+            for await (const packet of stream) {
+                // Write SSE format: "event: <type>\ndata: <json>\n\n"
+                res.write(`event: ${packet.type}\n`);
+                res.write(`data: ${JSON.stringify(packet)}\n\n`);
+            }
+        } catch (error) {
+            res.write(`event: error\n`);
+            res.write(`data: ${JSON.stringify({ type: 'error', payload: { message: error.message } })}\n\n`);
+        } finally {
+            res.end();
+        }
     }
+
+    // -----------------------------------------------------------------------
+    // Stop
+    // -----------------------------------------------------------------------
 
     /**
      * POST /api/chat/stop
-     * Aborts the active AbortController for the given conversation.
+     * Aborts an active stream for the given conversation.
      */
-    @Post('stop')
+    @Post('chat/stop')
+    @HttpCode(HttpStatus.OK)
     async stopChat(@Body() body: { conversationId: string }) {
-        // TODO: Implement request abortion
+        const stopped = this.chatService.stopStream(body.conversationId);
+        return { stopped };
     }
 }
