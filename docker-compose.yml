@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Tier 2: The Middleware (NestJS)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile
+    container_name: llm_middleware
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/db/dev.db
+      - CHROMA_HOST=http://chromadb:8000
+      # OPTION A: If Ollama is running inside Docker (Uncomment below)
+      # - OLLAMA_HOST=http://ollama:11434
+      # OPTION B: If Ollama is running natively on your Mac/Windows (Use this)
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - NODE_ENV=production
+    volumes:
+      # Mount the data folder for persistence
+      - ./data/uploads:/app/data/uploads
+      - ./data/db:/app/data/db
+    depends_on:
+      - chromadb
+    networks:
+      - llm-network
+
+  # ---------------------------------------------------------------------------
+  # Tier 3: Vector Storage (ChromaDB)
+  # ---------------------------------------------------------------------------
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: llm_vector_store
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/vectors:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+    networks:
+      - llm-network
+
+  # ---------------------------------------------------------------------------
+  # Tier 4: Inference Engine (Ollama) - OPTIONAL
+  # ---------------------------------------------------------------------------
+  # NOTE: If you are on Mac (M1/M2/M3), DISABLE this service and run Ollama 
+  # natively for GPU support. Docker on Mac cannot access the GPU/NPU efficiently.
+  # ---------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: llm_engine
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./data/models:/root/.ollama
+    environment:
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_KEEP_ALIVE=1h
+    # GPU CONFIGURATION (Linux/Windows + NVIDIA Only)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    networks:
+      - llm-network
+
+networks:
+  llm-network:
+    driver: bridge
