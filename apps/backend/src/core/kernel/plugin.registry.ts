@@ -5,7 +5,7 @@
  * Based on: Docs/Apps/Middleware/SpecSheet.md § 4.2
  */
 import { Injectable } from '@nestjs/common';
-import { AgentPlugin, ToolDefinition } from '../../../../libs/shared-types';
+import { AgentPlugin, ToolDefinition } from '../../plugins/base.plugin';
 
 @Injectable()
 export class PluginRegistry {

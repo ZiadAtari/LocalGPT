@@ -1,16 +1,11 @@
-/**
- * Web Search Plugin
- * =================
- * Searches the web for real-time information.
- * Based on: Docs/Apps/Middleware/SpecSheet.md § 4.2
- */
-import { BasePlugin, ToolDefinition } from '../base.plugin';
-
-export class WebSearchPlugin extends BasePlugin {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.WebSearchPlugin = void 0;
+const base_plugin_1 = require("../base.plugin");
+class WebSearchPlugin extends base_plugin_1.BasePlugin {
     name = 'web_search';
     description = 'Search the web for real-time information.';
-
-    getDefinition(): ToolDefinition {
+    getDefinition() {
         return {
             type: 'function',
             function: {
@@ -26,9 +21,9 @@ export class WebSearchPlugin extends BasePlugin {
             },
         };
     }
-
-    async execute(args: Record<string, any>): Promise<string> {
-        // TODO: Implement web search (ollama.webSearch or external API)
+    async execute(args) {
         return `Search results for: ${args.query}`;
     }
 }
+exports.WebSearchPlugin = WebSearchPlugin;
+//# sourceMappingURL=web-search.plugin.js.map

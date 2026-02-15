@@ -1,14 +1,3 @@
-/**
- * Base Plugin
- * ===========
- * Abstract base class providing common functionality for all plugins.
- * Concrete plugins extend this class.
- * Based on: Docs/Apps/Middleware/SpecSheet.md § 4.2
- */
-
-/**
- * Ollama Tool definition shape (mirrors shared-types/plugin.types.ts).
- */
 export interface ToolDefinition {
     type: 'function';
     function: {
@@ -16,26 +5,23 @@ export interface ToolDefinition {
         description: string;
         parameters: {
             type: 'object';
-            properties: Record<string, { type: string; description: string }>;
+            properties: Record<string, {
+                type: string;
+                description: string;
+            }>;
             required: string[];
         };
     };
 }
-
-/**
- * The contract every Agent Plugin must implement.
- */
 export interface AgentPlugin {
     name: string;
     description: string;
     getDefinition(): ToolDefinition;
     execute(args: Record<string, any>): Promise<string>;
 }
-
-export abstract class BasePlugin implements AgentPlugin {
+export declare abstract class BasePlugin implements AgentPlugin {
     abstract name: string;
     abstract description: string;
-
     abstract getDefinition(): ToolDefinition;
     abstract execute(args: Record<string, any>): Promise<string>;
 }

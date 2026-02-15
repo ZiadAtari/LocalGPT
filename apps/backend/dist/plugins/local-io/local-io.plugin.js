@@ -1,16 +1,11 @@
-/**
- * Local I/O Plugin
- * ================
- * Reads local files from the filesystem.
- * Based on: Docs/Apps/Middleware/SpecSheet.md § 4.2
- */
-import { BasePlugin, ToolDefinition } from '../base.plugin';
-
-export class LocalIOPlugin extends BasePlugin {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LocalIOPlugin = void 0;
+const base_plugin_1 = require("../base.plugin");
+class LocalIOPlugin extends base_plugin_1.BasePlugin {
     name = 'local_file_reader';
     description = 'Read the contents of a local text file.';
-
-    getDefinition(): ToolDefinition {
+    getDefinition() {
         return {
             type: 'function',
             function: {
@@ -26,9 +21,9 @@ export class LocalIOPlugin extends BasePlugin {
             },
         };
     }
-
-    async execute(args: Record<string, any>): Promise<string> {
-        // TODO: Implement fs.readFile with sanitization
+    async execute(args) {
         return `Contents of: ${args.filePath}`;
     }
 }
+exports.LocalIOPlugin = LocalIOPlugin;
+//# sourceMappingURL=local-io.plugin.js.map
