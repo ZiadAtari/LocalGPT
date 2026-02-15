@@ -1,0 +1,82 @@
+// Prisma Schema
+// ==============
+// Based on: Docs/Apps/Data Layer/SpecSheet.md § 3.2
+// Defines the relational data model for chat history, messages,
+// RAG context references, and organizational tags.
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------------------------------------------------------------------------
+// The Conversation Aggregate
+// ---------------------------------------------------------------------------
+
+model Conversation {
+  id        String    @id @default(uuid())
+  title     String    @default("New Chat")
+  summary   String?   // Auto-generated 1-line summary
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  messages  Message[]
+  tags      Tag[]
+}
+
+// ---------------------------------------------------------------------------
+// The Atomic Message Unit
+// ---------------------------------------------------------------------------
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  role           String   // 'user', 'assistant', 'system', 'tool'
+
+  // The core content
+  content        String   // The actual response or user prompt
+
+  // For Reasoning Models (e.g., DeepSeek)
+  thoughtProcess String?  // The internal monologue (hidden by default)
+
+  // For Tool Use
+  toolCallId     String?  // If this message triggered a tool
+  toolName       String?  // e.g. "web_search"
+  toolArgs       String?  // JSON string of arguments
+
+  // Context References (RAG)
+  references     ContextReference[]
+
+  createdAt      DateTime @default(now())
+  tokenCount     Int?     // For tracking context window usage
+}
+
+// ---------------------------------------------------------------------------
+// RAG Linkage
+// ---------------------------------------------------------------------------
+
+model ContextReference {
+  id          String @id @default(uuid())
+  messageId   String
+  message     Message @relation(fields: [messageId], references: [id])
+
+  documentId  String // Link to the Vector Store Document ID
+  score       Float  // Relevance score (0.0 - 1.0)
+  snippet     String // The specific text chunk used
+}
+
+// ---------------------------------------------------------------------------
+// Organization
+// ---------------------------------------------------------------------------
+
+model Tag {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  conversations Conversation[]
+}
