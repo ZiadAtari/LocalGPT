@@ -8,23 +8,24 @@ import { Component, output, input, ChangeDetectionStrategy, ViewChild, ElementRe
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'app-input-area',
-  standalone: true,
-  imports: [FormsModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-        <div class="input-wrapper">
-            <div class="input-container">
-                <textarea
-                    #textArea
-                    [(ngModel)]="text"
-                    (keydown)="onKeyDown($event)"
-                    [placeholder]="isStreaming() ? 'Waiting for response...' : 'Message LocalGPT...'"
-                    [disabled]="isStreaming()"
-                    rows="1"
-                    class="chat-input"
-                ></textarea>
-                <div class="input-actions">
+    selector: 'app-input-area',
+    standalone: true,
+    imports: [FormsModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
+        <div class="input-surface glass-panel floating-shadow">
+            <textarea
+                #textArea
+                [(ngModel)]="text"
+                (keydown)="onKeyDown($event)"
+                [placeholder]="isStreaming() ? 'AI is thinking...' : 'Message LocalGPT...'"
+                [disabled]="isStreaming()"
+                rows="1"
+                class="chat-input"
+            ></textarea>
+            
+            <div class="input-controls">
+                <div class="model-badge">
                     <select
                         [(ngModel)]="selectedModel"
                         (ngModelChange)="modelChange.emit($event)"
@@ -34,178 +35,235 @@ import { FormsModule } from '@angular/forms';
                             <option [value]="model">{{ model }}</option>
                         }
                     </select>
-
-                    @if (isStreaming()) {
-                        <button class="stop-btn" (click)="stopRequest.emit()" title="Stop generating">
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                <rect x="3" y="3" width="10" height="10" rx="1"/>
-                            </svg>
-                        </button>
-                    } @else {
-                        <button
-                            class="send-btn"
-                            (click)="send()"
-                            [disabled]="!text.trim()"
-                            title="Send message"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M1.5 1.5l13 6.5-13 6.5V9l8-1-8-1V1.5z"/>
-                            </svg>
-                        </button>
-                    }
+                    <span class="chevron">▼</span>
                 </div>
+
+                @if (isStreaming()) {
+                    <button class="action-btn stop" (click)="stopRequest.emit()" title="Stop generating">
+                        <span class="btn-icon">⏹</span>
+                    </button>
+                } @else {
+                    <button
+                        class="action-btn send"
+                        (click)="send()"
+                        [disabled]="!text.trim()"
+                        title="Send message"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                }
             </div>
-            <p class="input-hint">
-                <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line
-            </p>
+        </div>
+        <div class="input-footer">
+            <span class="footer-tip"><strong>Enter</strong> to send</span>
+            <span class="footer-tip"><strong>Shift+Enter</strong> for new line</span>
         </div>
     `,
-  styles: [`
-        .input-wrapper {
-            padding: 0.75rem 1rem 1rem;
-            background: var(--surface-primary);
-            border-top: 1px solid var(--border);
+    styles: [`
+        :host {
+            display: block;
+            width: 100%;
         }
 
-        .input-container {
+        .input-surface {
             display: flex;
             align-items: flex-end;
-            gap: 0.5rem;
-            background: var(--surface-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 0.5rem 0.5rem 0.5rem 1rem;
-            transition: border-color 0.2s;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 1.5rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: rgba(30, 30, 40, 0.6); /* Default Dark Mode */
+            border: 1px solid transparent; /* Smooth border transition */
         }
 
-        .input-container:focus-within {
+        :host-context(html:not(.dark)) .input-surface {
+            background: #ffffff;
+            border-color: var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .input-surface:focus-within {
             border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        :host-context(html:not(.dark)) .input-surface:focus-within {
+            box-shadow: 0 0 0 1px var(--accent), 0 8px 24px rgba(0, 0, 0, 0.08);
         }
 
         .chat-input {
             flex: 1;
-            border: none;
             background: transparent;
+            border: none;
             color: var(--text-primary);
             font-family: inherit;
-            font-size: 0.9375rem;
+            font-size: 0.95rem;
             line-height: 1.5;
             resize: none;
             outline: none;
-            max-height: 8rem;
-            overflow-y: auto;
+            max-height: 120px;
+            padding: 0.25rem 0;
         }
 
         .chat-input::placeholder {
             color: var(--text-muted);
         }
 
-        .chat-input:disabled {
-            opacity: 0.5;
-        }
-
-        .input-actions {
+        .input-controls {
             display: flex;
             align-items: center;
-            gap: 0.375rem;
-            flex-shrink: 0;
+            gap: 0.5rem;
+            padding-bottom: 0.125rem; /* Align with text baseline */
+        }
+
+        .model-badge {
+            position: relative;
+            background: var(--surface-tertiary);
+            border-radius: 2rem;
+            padding: 0 0.75rem 0 0.75rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .model-badge:hover {
+            border-color: var(--text-secondary);
+            background: var(--surface-hover);
         }
 
         .model-select {
-            background: var(--surface-tertiary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            appearance: none;
+            background: transparent;
+            border: none;
             color: var(--text-secondary);
             font-size: 0.75rem;
-            padding: 0.25rem 0.4rem;
-            outline: none;
+            font-weight: 500;
+            width: 100%;
             cursor: pointer;
-            max-width: 120px;
+            outline: none;
+            padding-right: 0.25rem;
         }
 
-        .send-btn, .stop-btn {
+        .model-select:hover {
+            color: var(--text-primary);
+        }
+
+        .chevron {
+            font-size: 0.5rem;
+            color: var(--text-muted);
+            pointer-events: none;
+            margin-left: 0.25rem;
+        }
+
+        .action-btn {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 50%;
+            border: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 2rem;
-            height: 2rem;
-            border: none;
-            border-radius: var(--radius-sm);
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .send-btn {
-            background: var(--accent);
-            color: white;
+        .action-btn.send {
+            background: var(--text-primary); /* White/Black input contrast */
+            color: var(--surface-primary);
         }
 
-        .send-btn:hover:not(:disabled) {
-            background: var(--accent-hover);
+        .action-btn.send:hover:not(:disabled) {
             transform: scale(1.05);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+        }
+        
+        /* In light mode, reverse the contrast */
+        :host-context(html:not(.dark)) .action-btn.send {
+            background: var(--surface-primary);
+            color: var(--text-primary);
         }
 
-        .send-btn:disabled {
-            opacity: 0.3;
+        .action-btn.send:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
 
-        .stop-btn {
-            background: var(--error);
-            color: white;
-        }
-
-        .stop-btn:hover {
-            opacity: 0.85;
-        }
-
-        .input-hint {
-            text-align: center;
-            font-size: 0.6875rem;
-            color: var(--text-muted);
-            margin-top: 0.375rem;
-        }
-
-        .input-hint kbd {
+        .action-btn.stop {
             background: var(--surface-tertiary);
             border: 1px solid var(--border);
-            border-radius: 3px;
-            padding: 0 0.25rem;
-            font-family: inherit;
-            font-size: 0.625rem;
+            color: var(--text-primary);
+        }
+
+        .action-btn.stop:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn-icon {
+            font-size: 0.75rem;
+        }
+
+        .input-footer {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.75rem;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .input-surface:focus-within + .input-footer {
+            opacity: 1;
+        }
+
+        .footer-tip {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .footer-tip strong {
+            font-weight: 600;
+            color: var(--text-secondary);
         }
     `],
 })
 export class InputAreaComponent {
-  isStreaming = input(false);
-  models = input<string[]>(['deepseek-r1']);
+    isStreaming = input(false);
+    models = input<string[]>(['deepseek-r1']);
 
-  sendMessage = output<string>();
-  stopRequest = output<void>();
-  modelChange = output<string>();
+    sendMessage = output<string>();
+    stopRequest = output<void>();
+    modelChange = output<string>();
 
-  text = '';
-  selectedModel = 'deepseek-r1';
+    text = '';
+    selectedModel = 'deepseek-r1';
 
-  @ViewChild('textArea') textArea!: ElementRef<HTMLTextAreaElement>;
+    @ViewChild('textArea') textArea!: ElementRef<HTMLTextAreaElement>;
 
-  onKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.send();
+    onKeyDown(event: KeyboardEvent): void {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            this.send();
+        }
     }
-  }
 
-  send(): void {
-    const trimmed = this.text.trim();
-    if (!trimmed) return;
+    send(): void {
+        const trimmed = this.text.trim();
+        if (!trimmed) return;
 
-    this.sendMessage.emit(trimmed);
-    this.text = '';
+        this.sendMessage.emit(trimmed);
+        this.text = '';
 
-    // Reset textarea height
-    if (this.textArea) {
-      this.textArea.nativeElement.style.height = 'auto';
+        // Reset textarea height
+        if (this.textArea) {
+            this.textArea.nativeElement.style.height = 'auto';
+        }
     }
-  }
 }

@@ -29,7 +29,7 @@ interface ChatMessage {
   imports: [MessageBubbleComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-        <div class="message-list" #scrollContainer>
+        <div class="message-list-viewport" #scrollContainer>
             @if (messages().length === 0) {
                 <div class="empty-state">
                     <div class="empty-icon">🧠</div>
@@ -38,24 +38,44 @@ interface ChatMessage {
                     <p class="empty-hint">Type a message below to start chatting.</p>
                 </div>
             } @else {
-                @for (msg of messages(); track msg.id) {
-                    <app-message-bubble
-                        [role]="msg.role"
-                        [content]="msg.content"
-                        [thought]="msg.thoughtProcess"
-                        [streaming]="msg.isStreaming"
-                        [timestamp]="msg.timestamp"
-                    />
-                }
+                <div class="message-content">
+                    @for (msg of messages(); track msg.id) {
+                        <app-message-bubble
+                            [role]="msg.role"
+                            [content]="msg.content"
+                            [thought]="msg.thoughtProcess"
+                            [streaming]="msg.isStreaming"
+                            [timestamp]="msg.timestamp"
+                        />
+                    }
+                </div>
             }
         </div>
     `,
   styles: [`
-        .message-list {
+        :host {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden; /* Contain inner scroll */
+            min-height: 0;    /* Flexbox nesting fix */
+        }
+
+        .message-list-viewport {
             flex: 1;
             overflow-y: auto;
             overflow-x: hidden;
             scroll-behavior: smooth;
+            padding: 1rem 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* Start from top */
+            min-height: min-content;
         }
 
         .empty-state {
@@ -63,7 +83,7 @@ interface ChatMessage {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100%;
+            flex: 1; /* Take full height to center content */
             text-align: center;
             padding: 2rem;
             animation: fadeIn 0.5s ease-out;
@@ -78,32 +98,42 @@ interface ChatMessage {
             font-size: 3rem;
             margin-bottom: 1rem;
             filter: grayscale(0.2);
+            opacity: 0.8;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         .empty-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.25rem;
-            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            letter-spacing: -0.02em;
         }
 
         .empty-subtitle {
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: var(--text-secondary);
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            max-width: 400px;
+            line-height: 1.5;
         }
 
         .empty-hint {
-            font-size: 0.8125rem;
+            font-size: 0.85rem;
             color: var(--text-muted);
-            background: var(--surface-secondary);
+            background: var(--surface-tertiary);
             border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            padding: 0.5rem 1.25rem;
+            backdrop-filter: blur(4px);
         }
     `],
 })

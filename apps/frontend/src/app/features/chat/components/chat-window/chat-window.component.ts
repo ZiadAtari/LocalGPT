@@ -20,53 +20,76 @@ import { InputAreaComponent } from '../input-area/input-area.component';
   imports: [MessageListComponent, InputAreaComponent],
   template: `
         <div class="chat-layout">
-            <!-- Sidebar -->
-            <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+            <!-- Ambient Background Blob -->
+            <div class="ambient-glow"></div>
+
+            <!-- Sidebar (Glass Panel) -->
+            <aside class="sidebar glass-panel" [class.collapsed]="sidebarCollapsed">
                 <div class="sidebar-header">
                     <h1 class="brand">
                         <span class="brand-icon">🧠</span>
-                        <span class="brand-text">LocalGPT</span>
+                        <span class="brand-text text-gradient">LocalGPT</span>
                     </h1>
                     <button class="icon-btn" (click)="sidebarCollapsed = !sidebarCollapsed" title="Toggle sidebar">
-                        ☰
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="3" y1="12" x2="21" y2="12"></line>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <line x1="3" y1="18" x2="21" y2="18"></line>
+                        </svg>
                     </button>
                 </div>
 
-                <button class="new-chat-btn" (click)="startNewChat()">
-                    <span>+</span> New Chat
-                </button>
+                <div class="sidebar-content">
+                    <button class="new-chat-btn" (click)="startNewChat()">
+                        <span class="plus-icon">+</span> New Chat
+                    </button>
 
-                <div class="conversation-list">
-                    @for (conv of conversations; track conv.id) {
-                        <button
-                            class="conv-item"
-                            [class.active]="conv.id === store.conversationId()"
-                            (click)="loadConversation(conv.id)"
-                        >
-                            <span class="conv-title">{{ conv.title }}</span>
-                            <span class="conv-date">{{ formatDate(conv.updatedAt) }}</span>
-                        </button>
-                    }
+                    <div class="conversation-list">
+                        @for (conv of conversations; track conv.id) {
+                            <button
+                                class="conv-item"
+                                [class.active]="conv.id === store.conversationId()"
+                                (click)="loadConversation(conv.id)"
+                            >
+                                <span class="conv-title">{{ conv.title || 'New Conversation' }}</span>
+                                <span class="conv-date">{{ formatDate(conv.updatedAt) }}</span>
+                            </button>
+                        }
+                    </div>
                 </div>
 
                 <div class="sidebar-footer">
                     <button class="icon-btn theme-toggle" (click)="theme.toggle()" title="Toggle theme">
                         {{ theme.isDark() ? '☀️' : '🌙' }}
                     </button>
-                    <span class="model-label">{{ store.selectedModel() }}</span>
+                    <span class="model-label glass-panel">{{ store.selectedModel() }}</span>
                 </div>
             </aside>
 
+            <!-- Floating Sidebar Toggle (Visible when collapsed) -->
+            @if (sidebarCollapsed) {
+                <button class="floating-toggle glass-panel" (click)="sidebarCollapsed = false">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            }
+
             <!-- Main Chat Area -->
-            <main class="chat-main">
+            <main class="chat-main" [class.expanded]="sidebarCollapsed">
                 <app-message-list [messages]="store.messages()" />
-                <app-input-area
-                    [isStreaming]="store.isStreaming()"
-                    [models]="availableModels"
-                    (sendMessage)="onSend($event)"
-                    (stopRequest)="onStop()"
-                    (modelChange)="store.selectedModel.set($event)"
-                />
+                
+                <div class="input-wrapper-container">
+                    <app-input-area
+                        [isStreaming]="store.isStreaming()"
+                        [models]="availableModels"
+                        (sendMessage)="onSend($event)"
+                        (stopRequest)="onStop()"
+                        (modelChange)="store.selectedModel.set($event)"
+                    />
+                </div>
             </main>
         </div>
     `,
@@ -75,162 +98,199 @@ import { InputAreaComponent } from '../input-area/input-area.component';
             display: flex;
             height: 100vh;
             width: 100vw;
+            position: relative;
+            background: var(--surface-primary);
             overflow: hidden;
+        }
+
+        .ambient-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* ---- Sidebar ---- */
         .sidebar {
-            width: 260px;
-            min-width: 260px;
-            background: var(--surface-secondary);
-            border-right: 1px solid var(--border);
+            width: 280px;
+            height: 96vh;
+            margin: 2vh 0 2vh 1rem;
+            border-radius: var(--radius-xl);
             display: flex;
             flex-direction: column;
-            transition: min-width 0.25s ease, width 0.25s ease, opacity 0.25s ease;
-            overflow: hidden;
+            z-index: 20;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease, opacity 0.3s ease;
         }
 
         .sidebar.collapsed {
-            min-width: 0;
             width: 0;
-            border-right: none;
+            margin-left: 0;
+            padding: 0;
+            opacity: 0;
+            pointer-events: none;
+            overflow: hidden;
         }
 
         .sidebar-header {
+            padding: 1.25rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--border);
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 1rem;
+            gap: 0.75rem;
+            font-size: 1.1rem;
             font-weight: 700;
+            letter-spacing: -0.02em;
         }
 
-        .brand-icon {
-            font-size: 1.25rem;
-        }
-
-        .brand-text {
-            background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .icon-btn {
-            background: none;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text-secondary);
-            cursor: pointer;
-            width: 2rem;
-            height: 2rem;
+        .sidebar-content {
+            flex: 1;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.875rem;
-            transition: all 0.15s;
-        }
-
-        .icon-btn:hover {
-            background: var(--surface-hover);
-            color: var(--text-primary);
+            flex-direction: column;
+            overflow: hidden;
+            padding: 1rem;
         }
 
         .new-chat-btn {
-            margin: 0.75rem;
-            padding: 0.5rem 1rem;
-            background: var(--accent-muted);
-            border: 1px dashed var(--accent);
-            border-radius: var(--radius-md);
-            color: var(--accent);
-            font-size: 0.8125rem;
-            font-weight: 500;
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--surface-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
             cursor: pointer;
-            transition: all 0.15s;
+            transition: all 0.2s;
+            margin-bottom: 1.5rem;
         }
 
         .new-chat-btn:hover {
-            background: var(--accent);
-            color: white;
-            border-style: solid;
+            background: var(--surface-hover);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .conversation-list {
             flex: 1;
             overflow-y: auto;
-            padding: 0.25rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
         }
 
         .conv-item {
-            width: 100%;
-            text-align: left;
-            background: none;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-lg);
             border: none;
-            border-radius: var(--radius-sm);
-            padding: 0.5rem 0.75rem;
-            margin-bottom: 2px;
+            background: transparent;
+            text-align: left;
             cursor: pointer;
-            transition: background 0.15s;
-            display: flex;
-            flex-direction: column;
-            gap: 0.125rem;
+            transition: all 0.2s;
+            color: var(--text-secondary);
         }
 
         .conv-item:hover {
             background: var(--surface-hover);
+            color: var(--text-primary);
         }
 
         .conv-item.active {
-            background: var(--accent-muted);
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            border-left: 3px solid var(--accent);
         }
 
         .conv-title {
-            font-size: 0.8125rem;
-            color: var(--text-primary);
+            display: block;
+            font-size: 0.9rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            margin-bottom: 0.125rem;
         }
 
         .conv-date {
-            font-size: 0.6875rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
         }
 
         .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0.75rem 1rem;
-            border-top: 1px solid var(--border);
         }
 
-        .theme-toggle {
-            font-size: 1rem;
+        .floating-toggle {
+            position: absolute;
+            top: 2rem;
+            left: 1rem;
+            z-index: 30;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
         }
+
+        .floating-toggle:hover {
+            color: var(--text-primary);
+            background: var(--surface-hover);
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            transition: color 0.2s;
+        }
+        
+        .icon-btn:hover { color: var(--text-primary); }
 
         .model-label {
-            font-size: 0.6875rem;
-            color: var(--text-muted);
-            background: var(--surface-tertiary);
-            padding: 0.15rem 0.5rem;
-            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+            color: var(--text-secondary);
         }
 
         /* ---- Main Chat ---- */
         .chat-main {
             flex: 1;
+            position: relative;
             display: flex;
             flex-direction: column;
-            min-width: 0;
-            background: var(--surface-primary);
+            height: 100vh;
+            z-index: 10;
+        }
+
+        .input-wrapper-container {
+            padding: 2rem;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
         }
     `],
 })
@@ -377,8 +437,13 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
       next: (models) => {
         if (models.length > 0) {
           this.availableModels = models.map((m) => m.name);
+          // Auto-select first model if none selected
+          if (!this.store.selectedModel()) {
+            this.store.selectedModel.set(this.availableModels[0]);
+          }
         }
       },
+      error: (err) => console.error('Failed to load models:', err)
     });
   }
 }
