@@ -1,13 +1,15 @@
 import { OllamaWrapper } from '../ollama/ollama.wrapper';
 import { StreamNormalizer, StreamPacket } from '../../core/stream/stream.normalizer';
 import { PrismaService } from '../../core/database/prisma.service';
+import { VectorStoreService } from '../rag/vector.store';
 export declare class ChatService {
     private readonly ollama;
     private readonly normalizer;
     private readonly prisma;
+    private readonly vectorStore;
     private readonly logger;
     private activeStreams;
-    constructor(ollama: OllamaWrapper, normalizer: StreamNormalizer, prisma: PrismaService);
+    constructor(ollama: OllamaWrapper, normalizer: StreamNormalizer, prisma: PrismaService, vectorStore: VectorStoreService);
     createConversation(title?: string): Promise<{
         id: string;
         title: string;
@@ -45,6 +47,6 @@ export declare class ChatService {
     streamChat(conversationId: string, userMessage: string, model?: string, options?: {
         num_ctx?: number;
         temperature?: number;
-    }): AsyncGenerator<StreamPacket>;
+    }, documentIds?: string[]): AsyncGenerator<StreamPacket>;
     stopStream(conversationId: string): boolean;
 }

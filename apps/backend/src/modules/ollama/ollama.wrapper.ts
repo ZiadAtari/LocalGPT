@@ -22,6 +22,11 @@ export class OllamaWrapper implements OnModuleInit {
 
     constructor(private readonly config: ConfigService) { }
 
+    /**
+     * Initialize the Ollama client.
+     * Reads `OLLAMA_HOST` from environment variables (defaults to localhost:11434).
+     * Verifies connection by listing available models.
+     */
     async onModuleInit() {
         const host = this.config.get<string>('OLLAMA_HOST', 'http://localhost:11434');
         this.client = new Ollama({ host });

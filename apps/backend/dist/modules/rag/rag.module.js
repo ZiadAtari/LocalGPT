@@ -10,11 +10,15 @@ exports.RagModule = void 0;
 const common_1 = require("@nestjs/common");
 const vector_store_1 = require("./vector.store");
 const file_processor_1 = require("./file.processor");
+const document_controller_1 = require("./document.controller");
+const ollama_module_1 = require("../ollama/ollama.module");
 let RagModule = class RagModule {
 };
 exports.RagModule = RagModule;
 exports.RagModule = RagModule = __decorate([
     (0, common_1.Module)({
+        imports: [ollama_module_1.OllamaModule],
+        controllers: [document_controller_1.DocumentController],
         providers: [vector_store_1.VectorStoreService, file_processor_1.FileProcessor],
         exports: [vector_store_1.VectorStoreService, file_processor_1.FileProcessor],
     })

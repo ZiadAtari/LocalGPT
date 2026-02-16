@@ -82,6 +82,7 @@ import { InputAreaComponent } from '../input-area/input-area.component';
                         (sendMessage)="onSend($event)"
                         (stopRequest)="onStop()"
                         (modelChange)="store.selectedModel.set($event)"
+                        (fileAttached)="onFileAttached($event)"
                     />
                 </div>
             </main>
@@ -280,6 +281,13 @@ import { InputAreaComponent } from '../input-area/input-area.component';
         }
     `],
 })
+/**
+ * Chat Window Component (Smart Container)
+ * ========================================
+ * The main chat view — owns the conversation lifecycle.
+ * Connects: ChatStore, StreamService, ApiService, ThemeService.
+ */
+@Component({ ... })
 export class ChatWindowComponent implements OnInit, OnDestroy {
   store = inject(ChatStore);
   private stream = inject(StreamService);
@@ -291,6 +299,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   conversations: ConversationSummary[] = [];
   availableModels: string[] = ['deepseek-r1'];
   sidebarCollapsed = false;
+  activeDocumentIds: string[] = [];
 
   private streamSub: Subscription | null = null;
   private routeSub: Subscription | null = null;
@@ -299,7 +308,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     this.loadConversations();
     this.loadModels();
 
-    // Route param handling
+    // Route param handling: Load conversation if :id is present
     this.routeSub = this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       if (id) {
@@ -314,6 +323,10 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     this.stream.disconnect();
   }
 
+  /**
+   * Starts a fresh conversation.
+   * Resets the store, calls API to create a new ID, and navigates to the new route.
+   */
   async startNewChat(): Promise<void> {
     this.store.reset();
     this.api.initConversation().subscribe({
@@ -326,6 +339,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Loads a complete conversation history from the backend.
+   * Maps the raw API response to the ChatMessage format expected by the store.
+   * @param id - Conversation UUID
+   */
   loadConversation(id: string): void {
     this.api.getConversation(id).subscribe({
       next: (conv) => {
@@ -342,6 +360,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Handles the send event from the input area.
+   * Creates a conversation if one doesn't exist, then triggers the stream.
+   * @param message - The user's prompt
+   */
   onSend(message: string): void {
     // Auto-create conversation if none active
     if (!this.store.conversationId()) {
@@ -358,6 +381,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Stop button handler. Aborts the stream and backend generation.
+   */
   onStop(): void {
     const convId = this.store.conversationId();
     if (convId) {
@@ -367,6 +393,28 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     this.store.finishStreaming();
   }
 
+  /**
+   * Handles file attachment from Input Area.
+   * Uploads file immediately to the backend for RAG processing.
+   * @param file - File object
+   */
+  onFileAttached(file: File): void {
+    this.api.uploadDocument(file).subscribe({
+      next: (doc) => {
+        if (doc.status === 'ready') {
+          this.activeDocumentIds.push(doc.documentId);
+          console.log(`📎 Document ready: ${doc.filename} (${doc.chunkCount} chunks)`);
+        } else if (doc.status === 'failed') {
+          console.error(`❌ Document failed: ${doc.filename}`, doc.error);
+        }
+      },
+      error: (err) => console.error('Upload failed:', err),
+    });
+  }
+
+  /**
+   * Human-readable time format for sidebar items (e.g., "5m ago").
+   */
   formatDate(dateStr: string): string {
     const d = new Date(dateStr);
     const now = new Date();
@@ -379,13 +427,20 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
     return d.toLocaleDateString();
   }
 
+  /**
+   * Core Logic:
+   * 1. Add User Message to Store.
+   * 2. Create Placeholder for Assistant Message.
+   * 3. Connect to SSE Stream.
+   * 4. Route incoming tokens to Store (appendToken / appendThought).
+   */
   private sendMessage(conversationId: string, message: string): void {
     this.store.addUserMessage(message);
     this.store.startAssistantMessage();
 
     this.streamSub?.unsubscribe();
     this.streamSub = this.stream
-      .connect(conversationId, message, this.store.selectedModel())
+      .connect(conversationId, message, this.store.selectedModel(), this.activeDocumentIds)
       .subscribe({
         next: (packet: StreamPacket) => {
           switch (packet.type) {
@@ -410,6 +465,9 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
           this.store.setError();
         },
       });
+
+    // Clear active documents after sending
+    this.activeDocumentIds = [];
   }
 
   private loadConversations(): void {

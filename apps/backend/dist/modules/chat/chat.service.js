@@ -15,16 +15,19 @@ const common_1 = require("@nestjs/common");
 const ollama_wrapper_1 = require("../ollama/ollama.wrapper");
 const stream_normalizer_1 = require("../../core/stream/stream.normalizer");
 const prisma_service_1 = require("../../core/database/prisma.service");
+const vector_store_1 = require("../rag/vector.store");
 let ChatService = ChatService_1 = class ChatService {
     ollama;
     normalizer;
     prisma;
+    vectorStore;
     logger = new common_1.Logger(ChatService_1.name);
     activeStreams = new Map();
-    constructor(ollama, normalizer, prisma) {
+    constructor(ollama, normalizer, prisma, vectorStore) {
         this.ollama = ollama;
         this.normalizer = normalizer;
         this.prisma = prisma;
+        this.vectorStore = vectorStore;
     }
     async createConversation(title) {
         const conversation = await this.prisma.conversation.create({
@@ -45,7 +48,7 @@ let ChatService = ChatService_1 = class ChatService {
             include: { messages: { orderBy: { createdAt: 'asc' } } },
         });
     }
-    async *streamChat(conversationId, userMessage, model = 'deepseek-r1', options) {
+    async *streamChat(conversationId, userMessage, model = 'deepseek-r1', options, documentIds) {
         await this.prisma.message.create({
             data: {
                 conversationId,
@@ -58,11 +61,29 @@ let ChatService = ChatService_1 = class ChatService {
             orderBy: { createdAt: 'asc' },
             take: 20,
         });
+        let ragContext = '';
+        if (documentIds?.length || this.vectorStore.getCount() > 0) {
+            try {
+                const queryEmbedding = await this.ollama.embed(userMessage);
+                const results = this.vectorStore.search(queryEmbedding, 5, documentIds?.length ? documentIds : undefined);
+                if (results.length > 0) {
+                    const contextChunks = results
+                        .filter((r) => r.score > 0.3)
+                        .map((r, i) => `[Source ${i + 1} - ${r.entry.metadata.filename}]\n${r.entry.text}`)
+                        .join('\n\n---\n\n');
+                    if (contextChunks) {
+                        ragContext = `\n\nYou have access to the following document context. Use it to answer the user's question accurately. If the context doesn't contain relevant information, say so.\n\n<context>\n${contextChunks}\n</context>`;
+                        this.logger.log(`Injected ${results.filter(r => r.score > 0.3).length} RAG context chunks`);
+                    }
+                }
+            }
+            catch (err) {
+                this.logger.warn(`RAG context retrieval failed: ${err.message}`);
+            }
+        }
+        const systemPrompt = `You are a helpful AI assistant running locally. Be concise and accurate.${ragContext}`;
         const messages = [
-            {
-                role: 'system',
-                content: 'You are a helpful AI assistant running locally. Be concise and accurate.',
-            },
+            { role: 'system', content: systemPrompt },
             ...history.map((msg) => ({
                 role: msg.role,
                 content: msg.content,
@@ -116,6 +137,7 @@ exports.ChatService = ChatService = ChatService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [ollama_wrapper_1.OllamaWrapper,
         stream_normalizer_1.StreamNormalizer,
-        prisma_service_1.PrismaService])
+        prisma_service_1.PrismaService,
+        vector_store_1.VectorStoreService])
 ], ChatService);
 //# sourceMappingURL=chat.service.js.map

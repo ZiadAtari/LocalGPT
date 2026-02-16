@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const chat_module_1 = require("./modules/chat/chat.module");
 const ollama_module_1 = require("./modules/ollama/ollama.module");
+const rag_module_1 = require("./modules/rag/rag.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -20,6 +21,7 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({ isGlobal: true }),
             chat_module_1.ChatModule,
             ollama_module_1.OllamaModule,
+            rag_module_1.RagModule,
         ],
     })
 ], AppModule);

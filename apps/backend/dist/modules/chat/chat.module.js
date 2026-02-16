@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const chat_controller_1 = require("./chat.controller");
 const chat_service_1 = require("./chat.service");
 const ollama_module_1 = require("../ollama/ollama.module");
+const rag_module_1 = require("../rag/rag.module");
 const prisma_service_1 = require("../../core/database/prisma.service");
 const stream_normalizer_1 = require("../../core/stream/stream.normalizer");
 let ChatModule = class ChatModule {
@@ -18,7 +19,7 @@ let ChatModule = class ChatModule {
 exports.ChatModule = ChatModule;
 exports.ChatModule = ChatModule = __decorate([
     (0, common_1.Module)({
-        imports: [ollama_module_1.OllamaModule],
+        imports: [ollama_module_1.OllamaModule, rag_module_1.RagModule],
         controllers: [chat_controller_1.ChatController],
         providers: [chat_service_1.ChatService, prisma_service_1.PrismaService, stream_normalizer_1.StreamNormalizer],
         exports: [chat_service_1.ChatService],

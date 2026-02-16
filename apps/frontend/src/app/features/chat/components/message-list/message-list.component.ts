@@ -5,30 +5,30 @@
  * Dumb component.
  */
 import {
-  Component,
-  input,
-  ChangeDetectionStrategy,
-  ElementRef,
-  ViewChild,
-  AfterViewChecked,
+    Component,
+    input,
+    ChangeDetectionStrategy,
+    ElementRef,
+    ViewChild,
+    AfterViewChecked,
 } from '@angular/core';
 import { MessageBubbleComponent } from '../message-bubble/message-bubble.component';
 
 interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  thoughtProcess: string;
-  isStreaming: boolean;
-  timestamp: Date;
+    id: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    thoughtProcess: string;
+    isStreaming: boolean;
+    timestamp: Date;
 }
 
 @Component({
-  selector: 'app-message-list',
-  standalone: true,
-  imports: [MessageBubbleComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
+    selector: 'app-message-list',
+    standalone: true,
+    imports: [MessageBubbleComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    template: `
         <div class="message-list-viewport" #scrollContainer>
             @if (messages().length === 0) {
                 <div class="empty-state">
@@ -52,7 +52,7 @@ interface ChatMessage {
             }
         </div>
     `,
-  styles: [`
+    styles: [`
         :host {
             display: flex;
             flex-direction: column;
@@ -137,22 +137,37 @@ interface ChatMessage {
         }
     `],
 })
+/**
+ * Message List Component
+ * ======================
+ * Scrollable list of messages with auto-scroll on new messages.
+ * Dumb component.
+ */
+@Component({ ... })
 export class MessageListComponent implements AfterViewChecked {
-  messages = input<ChatMessage[]>([]);
+    messages = input<ChatMessage[]>([]);
 
-  @ViewChild('scrollContainer') private scrollContainer!: ElementRef<HTMLDivElement>;
-  private shouldAutoScroll = true;
+    @ViewChild('scrollContainer') private scrollContainer!: ElementRef<HTMLDivElement>;
+    private shouldAutoScroll = true;
 
-  ngAfterViewChecked(): void {
-    if (this.shouldAutoScroll) {
-      this.scrollToBottom();
+    /**
+     * Called after every view check (render).
+     * Checks if we need to stick to the bottom.
+     */
+    ngAfterViewChecked(): void {
+        if (this.shouldAutoScroll) {
+            this.scrollToBottom();
+        }
     }
-  }
 
-  private scrollToBottom(): void {
-    const el = this.scrollContainer?.nativeElement;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
+    /**
+     * Force scrolls the container to the bottom.
+     * Typical for chat interfaces when a new message arrives.
+     */
+    private scrollToBottom(): void {
+        const el = this.scrollContainer?.nativeElement;
+        if (el) {
+            el.scrollTop = el.scrollHeight;
+        }
     }
-  }
 }

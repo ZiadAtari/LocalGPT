@@ -15,4 +15,11 @@ import { RouterOutlet } from '@angular/router';
         }
     `],
 })
+/**
+ * App Root Component
+ * ==================
+ * The entry point for the Angular application.
+ * Contains the main router outlet and global layout styles.
+ */
+@Component({ ... })
 export class AppComponent { }

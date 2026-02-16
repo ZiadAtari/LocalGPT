@@ -165,6 +165,13 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
         }
     `],
 })
+/**
+ * Message Bubble Component
+ * ========================
+ * Renders a single chat message (user or assistant).
+ * Dumb component — receives data via input.
+ */
+@Component({ ... })
 export class MessageBubbleComponent {
     role = input<'user' | 'assistant' | 'system'>('user');
     content = input('');
@@ -182,6 +189,9 @@ export class MessageBubbleComponent {
     /**
      * Simple markdown-to-HTML conversion for inline rendering.
      * Handles: **bold**, *italic*, `code`, ```code blocks```, links, lists.
+     * 
+     * Note: In a production app, we would use a library like 'marked' or 'ngx-markdown'.
+     * This regex-based implementation is for zero-dependency simplicity.
      */
     renderedContent = computed(() => {
         let text = this.content();
