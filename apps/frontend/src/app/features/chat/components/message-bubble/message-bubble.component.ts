@@ -19,7 +19,9 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
                     @if (isUser()) {
                         <div class="avatar-user">You</div>
                     } @else {
-                        <div class="avatar-ai">⚡</div>
+                        <div class="avatar-ai">
+                            <span class="sparkle">✨</span>
+                        </div>
                     }
                 </div>
                 
@@ -49,9 +51,14 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
     styles: [`
         .message-row {
             display: flex;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
             padding: 0 1rem;
-            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideUp 0.4s var(--spring-ease);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .message-row.user {
@@ -62,15 +69,10 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
             justify-content: flex-start;
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         .message-container {
             display: flex;
-            gap: 1rem;
-            max-width: 85%;
+            gap: 16px;
+            max-width: 80%;
         }
 
         .user .message-container {
@@ -79,8 +81,8 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
 
         .message-avatar {
             flex-shrink: 0;
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 40px;
+            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -90,34 +92,39 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: var(--surface-tertiary);
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.7rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid var(--border);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .avatar-ai {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: var(--accent-gradient);
-            color: white;
-            font-size: 1.25rem;
+            background: linear-gradient(135deg, #FF2E93, #FF8800);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 15px var(--accent-glow);
+            box-shadow: 0 0 20px rgba(255, 46, 147, 0.4);
+        }
+
+        .sparkle {
+            font-size: 1.2rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
         }
 
         .message-content-wrapper {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            min-width: 0; /* Text wrap fix */
+            gap: 8px;
+            min-width: 0;
         }
 
         .user .message-content-wrapper {
@@ -125,34 +132,36 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
         }
 
         .message-bubble {
-            padding: 1rem 1.25rem;
-            border-radius: 1.25rem;
-            position: relative;
-            word-break: break-word;
+            padding: 16px 20px;
+            border-radius: 20px;
+            font-size: 1rem;
             line-height: 1.6;
-            font-size: 0.95rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: white;
+            position: relative;
         }
 
+        /* --- User Bubble: Immersive Gradient --- */
         .user .message-bubble {
-            background: var(--user-bubble-bg);
-            color: var(--user-bubble-text);
-            border-bottom-right-radius: 0.25rem;
+            background: var(--accent-gradient);
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 8px 20px rgba(10, 132, 255, 0.3);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
+        /* --- Assistant Bubble: Glass Material --- */
         .assistant .message-bubble {
-            background: var(--assistant-bubble-bg);
-            border: 1px solid var(--assistant-bubble-border);
-            color: var(--text-primary);
-            border-bottom-left-radius: 0.25rem;
-            backdrop-filter: blur(8px);
+            background: rgba(60, 60, 70, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .message-meta {
             font-size: 0.7rem;
-            color: var(--text-muted);
-            opacity: 0.8;
-            margin-top: 0.25rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 4px;
+            padding: 0 4px;
         }
     `],
 })

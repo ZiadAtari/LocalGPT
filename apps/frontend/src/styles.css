@@ -1,102 +1,107 @@
 /* =========================================================
-   LocalGPT — Premium AI Design System
+   LocalGPT — Phase 3b: VisionOS "Spatial Glass" Design
    ========================================================= */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ---------------------------------------------------------
-   Design Tokens
+   Design Tokens (Spatial Computing)
    --------------------------------------------------------- */
 :root {
-    /* Deep Dark Theme (Default) */
-    --surface-primary: #05050A;
-    /* Almost black */
-    --surface-secondary: rgba(20, 20, 30, 0.6);
-    /* Glassy panel */
-    --surface-tertiary: rgba(255, 255, 255, 0.05);
-    /* Subtle highlight */
-    --surface-hover: rgba(255, 255, 255, 0.1);
+    /* -- Canvas -- */
+    /* Deep space abstract background color for depth */
+    --canvas-bg: #000000;
 
-    /* Accents */
-    --accent: #6366f1;
-    /* Indigo */
-    --accent-glow: rgba(99, 102, 241, 0.4);
-    --accent-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
-    /* Indigo -> Violet */
+    /* -- Materials -- */
+    /* The core "Glass" material: translucent, blurred, thick */
+    --glass-material: rgba(30, 30, 35, 0.70);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --glass-highlight: rgba(255, 255, 255, 0.05);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 
-    /* Text */
-    --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    /* -- Typography -- */
+    /* SF Pro / Inter: clean, slightly bolder for legibility on glass */
+    --text-primary: rgba(255, 255, 255, 0.95);
+    --text-secondary: rgba(255, 255, 255, 0.65);
+    --text-tertiary: rgba(255, 255, 255, 0.45);
 
-    /* Borders & Glass */
-    --border: rgba(255, 255, 255, 0.08);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shimmer: rgba(255, 255, 255, 0.03);
+    /* -- Accents -- */
+    /* "Liquid" gradients that feel alive */
+    --accent: #0a84ff;
+    /* iOS Blue */
+    --accent-glow: rgba(10, 132, 255, 0.5);
+    --accent-gradient: linear-gradient(135deg, #0a84ff, #5e5ce6);
+    /* Blue -> Purple */
 
-    /* Bubbles */
-    --user-bubble-bg: var(--accent-gradient);
-    --user-bubble-text: #ffffff;
-    --assistant-bubble-bg: rgba(30, 30, 40, 0.5);
-    --assistant-bubble-border: rgba(255, 255, 255, 0.05);
+    /* -- Shapes -- */
+    --radius-window: 24px;
+    --radius-ornament: 32px;
+    --radius-bubble: 20px;
 
-    /* Functional */
-    --thinking-bg: rgba(0, 0, 0, 0.2);
-    --radius-lg: 1.25rem;
-    --radius-xl: 1.5rem;
-    --shadow-glow: 0 0 20px var(--accent-glow);
-}
-
-html:not(.dark) {
-    /* Light Mode (Crisp & Clean) */
-    --surface-primary: #ffffff;
-    --surface-secondary: #f3f4f6;
-    --surface-tertiary: #e5e7eb;
-    --surface-hover: #f9fafb;
-
-    --accent: #4f46e5;
-    --accent-glow: rgba(79, 70, 229, 0.2);
-    --accent-gradient: linear-gradient(135deg, #4f46e5, #7c3aed);
-
-    --text-primary: #111827;
-    --text-secondary: #4b5563;
-    --text-muted: #9ca3af;
-
-    --border: #e2e8f0;
-    --glass-border: #e2e8f0;
-
-    --user-bubble-bg: var(--accent-gradient);
-    --user-bubble-text: #ffffff;
-    --assistant-bubble-bg: #f3f4f6;
-    --assistant-bubble-border: transparent;
-
-    --thinking-bg: #f9fafb;
+    /* -- Animation -- */
+    --spring-ease: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Bouncy "Touch" feel */
 }
 
 /* ---------------------------------------------------------
    Global Resets
    --------------------------------------------------------- */
 body {
-    background-color: var(--surface-primary);
+    background-color: var(--canvas-bg);
     color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     overflow: hidden;
-    /* App-like feel */
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+
+    /* VisionOS-style Abstract Background */
+    background: radial-gradient(circle at 50% 50%, #1c1c1e 0%, #000000 100%);
+}
+
+/* Add a subtle "Space" texture overlay */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 15% 50%, rgba(94, 92, 230, 0.15), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(10, 132, 255, 0.15), transparent 25%);
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* ---------------------------------------------------------
-   Utilities
+   Glass Utilities
    --------------------------------------------------------- */
 .glass-panel {
-    background: var(--surface-secondary);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-material);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
     border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow), inset 0 0 0 1px var(--glass-highlight);
 }
 
-.floating-shadow {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+.glass-ornament {
+    background: rgba(50, 50, 60, 0.75);
+    /* Slightly lighter for ornaments */
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ---------------------------------------------------------
+   Typography Helpers
+   --------------------------------------------------------- */
+.text-vibrant {
+    color: var(--text-primary);
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    /* Lift text off glass */
 }
 
 .text-gradient {
@@ -107,10 +112,11 @@ body {
 }
 
 /* ---------------------------------------------------------
-   Scrollbar Styling
+   Scrollbar (Hidden for clean look, visible on hover)
    --------------------------------------------------------- */
 ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -118,20 +124,21 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--surface-tertiary);
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+    background: rgba(255, 255, 255, 0.4);
 }
 
 /* ---------------------------------------------------------
-   Markdown Content
+   Markdown Content (Clean, legible on glass)
    --------------------------------------------------------- */
 .markdown-content {
-    font-size: 0.95rem;
+    font-size: 1rem;
     line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .markdown-content p {
@@ -140,25 +147,18 @@ body {
 
 .markdown-content code {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85em;
-    background: var(--surface-tertiary);
+    font-size: 0.9em;
+    background: rgba(0, 0, 0, 0.3);
     padding: 0.2em 0.4em;
-    border-radius: 4px;
-    color: #e2e8f0;
-    /* Default code color in dark mode */
-}
-
-html:not(.dark) .markdown-content code {
-    color: #db2777;
-    /* Pinkish in light mode */
-    background: #fdf2f8;
+    border-radius: 6px;
+    color: #ff9f0a;
+    /* iOS Orange for code */
 }
 
 .markdown-content pre {
-    background: #0d0d12;
-    /* Always dark code blocks */
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     padding: 1rem;
     margin: 1rem 0;
     overflow-x: auto;
@@ -167,33 +167,25 @@ html:not(.dark) .markdown-content code {
 .markdown-content pre code {
     background: none;
     padding: 0;
-    color: #d4d4d8;
-    font-size: 0.9em;
-}
-
-.markdown-content a {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-
-.markdown-content blockquote {
-    border-left: 3px solid var(--accent);
-    padding-left: 1rem;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-.markdown-content ul,
-.markdown-content ol {
-    padding-left: 1.5rem;
-    margin-bottom: 1rem;
+    color: #e5e5e5;
 }
 
 /* ---------------------------------------------------------
-   Cursor Animation
+   Animations
    --------------------------------------------------------- */
-@keyframes blink {
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-3px);
+    }
+}
+
+@keyframes cursor-blink {
 
     0%,
     100% {
@@ -208,13 +200,6 @@ html:not(.dark) .markdown-content code {
 .streaming-cursor::after {
     content: '▋';
     color: var(--accent);
-    animation: blink 1s steps(2) infinite;
+    animation: cursor-blink 1s step-end infinite;
     margin-left: 2px;
-}
-
-/* ---------------------------------------------------------
-   Transitions
-   --------------------------------------------------------- */
-.transition-all-200 {
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }

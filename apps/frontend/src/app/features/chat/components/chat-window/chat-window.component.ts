@@ -19,19 +19,16 @@ import { InputAreaComponent } from '../input-area/input-area.component';
   standalone: true,
   imports: [MessageListComponent, InputAreaComponent],
   template: `
-        <div class="chat-layout">
-            <!-- Ambient Background Blob -->
-            <div class="ambient-glow"></div>
-
-            <!-- Sidebar (Glass Panel) -->
-            <aside class="sidebar glass-panel" [class.collapsed]="sidebarCollapsed">
+        <div class="spatial-layout">
+            <!-- Floating Sidebar Ornament -->
+            <aside class="sidebar-ornament glass-ornament" [class.collapsed]="sidebarCollapsed">
                 <div class="sidebar-header">
                     <h1 class="brand">
-                        <span class="brand-icon">🧠</span>
-                        <span class="brand-text text-gradient">LocalGPT</span>
+                        <span class="brand-icon">🥽</span>
+                        <span class="brand-text">LocalGPT</span>
                     </h1>
-                    <button class="icon-btn" (click)="sidebarCollapsed = !sidebarCollapsed" title="Toggle sidebar">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <button class="icon-btn" (click)="sidebarCollapsed = !sidebarCollapsed" title="Toggle Sidebar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="3" y1="12" x2="21" y2="12"></line>
                             <line x1="3" y1="6" x2="21" y2="6"></line>
                             <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -59,17 +56,14 @@ import { InputAreaComponent } from '../input-area/input-area.component';
                 </div>
 
                 <div class="sidebar-footer">
-                    <button class="icon-btn theme-toggle" (click)="theme.toggle()" title="Toggle theme">
-                        {{ theme.isDark() ? '☀️' : '🌙' }}
-                    </button>
                     <span class="model-label glass-panel">{{ store.selectedModel() }}</span>
                 </div>
             </aside>
 
-            <!-- Floating Sidebar Toggle (Visible when collapsed) -->
+            <!-- Floating Toggle (when collapsed) -->
             @if (sidebarCollapsed) {
-                <button class="floating-toggle glass-panel" (click)="sidebarCollapsed = false">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button class="floating-toggle glass-ornament" (click)="sidebarCollapsed = false">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -77,11 +71,11 @@ import { InputAreaComponent } from '../input-area/input-area.component';
                 </button>
             }
 
-            <!-- Main Chat Area -->
-            <main class="chat-main" [class.expanded]="sidebarCollapsed">
+            <!-- Main Chat Panel -->
+            <main class="chat-panel glass-panel" [class.full-width]="sidebarCollapsed">
                 <app-message-list [messages]="store.messages()" />
                 
-                <div class="input-wrapper-container">
+                <div class="input-zone">
                     <app-input-area
                         [isStreaming]="store.isStreaming()"
                         [models]="availableModels"
@@ -94,94 +88,83 @@ import { InputAreaComponent } from '../input-area/input-area.component';
         </div>
     `,
   styles: [`
-        .chat-layout {
+        .spatial-layout {
             display: flex;
             height: 100vh;
             width: 100vw;
+            padding: 24px;
+            gap: 24px;
+            box-sizing: border-box;
             position: relative;
-            background: var(--surface-primary);
-            overflow: hidden;
         }
 
-        .ambient-glow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 800px;
-            height: 800px;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* ---- Sidebar ---- */
-        .sidebar {
-            width: 280px;
-            height: 96vh;
-            margin: 2vh 0 2vh 1rem;
-            border-radius: var(--radius-xl);
+        /* --- Sidebar Ornament --- */
+        .sidebar-ornament {
+            width: 320px;
             display: flex;
             flex-direction: column;
-            z-index: 20;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease, opacity 0.3s ease;
+            border-radius: var(--radius-ornament);
+            overflow: hidden;
+            transition: all 0.4s var(--spring-ease);
+            will-change: width, opacity, transform;
+            z-index: 100;
         }
 
-        .sidebar.collapsed {
+        .sidebar-ornament.collapsed {
             width: 0;
-            margin-left: 0;
             padding: 0;
             opacity: 0;
             pointer-events: none;
-            overflow: hidden;
+            transform: translateX(-20px) scale(0.95);
         }
 
         .sidebar-header {
-            padding: 1.25rem;
+            padding: 1.5rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            font-size: 1.1rem;
+            gap: 0.5rem;
+            font-size: 1.25rem;
             font-weight: 700;
-            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
         }
 
         .sidebar-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
             padding: 1rem;
+            overflow: hidden;
         }
 
         .new-chat-btn {
-            width: 100%;
-            padding: 0.875rem;
-            background: var(--surface-tertiary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 16px;
+            color: white;
+            font-size: 1rem;
             font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 1.5rem;
         }
 
         .new-chat-btn:hover {
-            background: var(--surface-hover);
-            border-color: var(--accent);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .conversation-list {
@@ -189,107 +172,110 @@ import { InputAreaComponent } from '../input-area/input-area.component';
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 0.25rem;
+            gap: 4px;
         }
 
         .conv-item {
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius-lg);
+            padding: 12px 16px;
+            border-radius: 12px;
             border: none;
             background: transparent;
             text-align: left;
             cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text-secondary);
+            transition: background 0.2s;
+             color: var(--text-secondary);
         }
 
         .conv-item:hover {
-            background: var(--surface-hover);
-            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
         }
 
         .conv-item.active {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-            border-left: 3px solid var(--accent);
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            font-weight: 500;
         }
 
         .conv-title {
             display: block;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin-bottom: 0.125rem;
         }
 
         .conv-date {
-            font-size: 0.7rem;
-            color: var(--text-muted);
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
         }
 
         .sidebar-footer {
-            padding: 1rem;
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
         }
 
+        /* --- Floating Toggle --- */
         .floating-toggle {
             position: absolute;
-            top: 2rem;
-            left: 1rem;
-            z-index: 30;
-            width: 2.5rem;
-            height: 2.5rem;
+            top: 24px;
+            left: 8px; /* Move to gutter/margin */
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.7);
+            z-index: 101;
             transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .floating-toggle:hover {
-            color: var(--text-primary);
-            background: var(--surface-hover);
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
-
+        
         .icon-btn {
             background: transparent;
             border: none;
             color: var(--text-secondary);
             cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 0.5rem;
+            padding: 4px;
+            border-radius: 8px;
             transition: color 0.2s;
         }
-        
-        .icon-btn:hover { color: var(--text-primary); }
+        .icon-btn:hover { color: white; background: rgba(255,255,255,0.1); }
 
         .model-label {
-            font-size: 0.75rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 1rem;
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
             color: var(--text-secondary);
+            background: rgba(0,0,0,0.3);
         }
 
-        /* ---- Main Chat ---- */
-        .chat-main {
+        /* --- Main Chat Panel --- */
+        .chat-panel {
             flex: 1;
-            position: relative;
+            border-radius: var(--radius-window);
             display: flex;
             flex-direction: column;
-            height: 100vh;
-            z-index: 10;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.4s var(--spring-ease);
         }
 
-        .input-wrapper-container {
-            padding: 2rem;
+        .input-zone {
+            padding: 24px;
             width: 100%;
-            max-width: 900px;
+            max-width: 800px;
             margin: 0 auto;
         }
     `],
@@ -437,9 +423,12 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
       next: (models) => {
         if (models.length > 0) {
           this.availableModels = models.map((m) => m.name);
-          // Auto-select first model if none selected
+
+          // Auto-select preference
           if (!this.store.selectedModel()) {
-            this.store.selectedModel.set(this.availableModels[0]);
+            const preferred = this.availableModels.find(m => m.includes('gemma3:4b')) ||
+              this.availableModels.find(m => m.includes('llama:7b'));
+            this.store.selectedModel.set(preferred || this.availableModels[0]);
           }
         }
       },

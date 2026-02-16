@@ -25,26 +25,31 @@ import { FormsModule } from '@angular/forms';
             ></textarea>
             
             <div class="input-controls">
-                <div class="model-badge">
-                    <select
-                        [(ngModel)]="selectedModel"
-                        (ngModelChange)="modelChange.emit($event)"
-                        class="model-select"
-                    >
-                        @for (model of models(); track model) {
-                            <option [value]="model">{{ model }}</option>
-                        }
-                    </select>
-                    <span class="chevron">▼</span>
+                <!-- Custom Glass Dropdown -->
+                <div class="model-selector">
+                    <button class="model-trigger" (click)="toggleDropdown()" [class.active]="dropdownOpen">
+                        {{ selectedModel || 'Select Model' }}
+                        <span class="chevron">▼</span>
+                    </button>
+
+                    @if (dropdownOpen) {
+                        <div class="model-dropdown glass-panel">
+                            @for (model of models(); track model) {
+                                <button class="model-option" (click)="selectModel(model)">
+                                    {{ model }}
+                                </button>
+                            }
+                        </div>
+                    }
                 </div>
 
                 @if (isStreaming()) {
-                    <button class="action-btn stop" (click)="stopRequest.emit()" title="Stop generating">
+                    <button class="send-btn stop" (click)="stopRequest.emit()" title="Stop generating">
                         <span class="btn-icon">⏹</span>
                     </button>
                 } @else {
                     <button
-                        class="action-btn send"
+                        class="send-btn"
                         (click)="send()"
                         [disabled]="!text.trim()"
                         title="Send message"
@@ -57,6 +62,12 @@ import { FormsModule } from '@angular/forms';
                 }
             </div>
         </div>
+        
+        <!-- Backdrop for closing dropdown -->
+        @if (dropdownOpen) {
+            <div class="fixed-backdrop" (click)="dropdownOpen = false"></div>
+        }
+
         <div class="input-footer">
             <span class="footer-tip"><strong>Enter</strong> to send</span>
             <span class="footer-tip"><strong>Shift+Enter</strong> for new line</span>
@@ -71,160 +82,199 @@ import { FormsModule } from '@angular/forms';
         .input-surface {
             display: flex;
             align-items: flex-end;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 1.5rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            background: rgba(30, 30, 40, 0.6); /* Default Dark Mode */
-            border: 1px solid transparent; /* Smooth border transition */
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 32px;
+            transition: all 0.3s var(--spring-ease);
+            background: rgba(30, 30, 35, 0.6);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 20;
         }
 
-        :host-context(html:not(.dark)) .input-surface {
-            background: #ffffff;
-            border-color: var(--border);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        .input-surface:hover {
+            background: rgba(40, 40, 45, 0.7);
+            transform: scale(1.005);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            border-color: rgba(255, 255, 255, 0.25);
         }
 
+        /* Removed default blue focus ring, using custom glow */
         .input-surface:focus-within {
+            background: rgba(50, 50, 60, 0.8);
             border-color: var(--accent);
-            box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        :host-context(html:not(.dark)) .input-surface:focus-within {
-            box-shadow: 0 0 0 1px var(--accent), 0 8px 24px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 0 0 1px var(--accent), 0 12px 40px rgba(0,0,0,0.4);
         }
 
         .chat-input {
             flex: 1;
             background: transparent;
             border: none;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 0.95rem;
+            color: white;
+            font-size: 1rem;
             line-height: 1.5;
+            padding: 4px 0;
             resize: none;
+            max-height: 200px;
+            min-height: 24px;
             outline: none;
-            max-height: 120px;
-            padding: 0.25rem 0;
+            font-family: inherit;
         }
 
         .chat-input::placeholder {
-            color: var(--text-muted);
+            color: rgba(255, 255, 255, 0.4);
         }
 
         .input-controls {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding-bottom: 0.125rem; /* Align with text baseline */
+            gap: 0.75rem;
+            padding-bottom: 2px;
         }
 
-        .model-badge {
-            position: relative;
-            background: var(--surface-tertiary);
-            border-radius: 2rem;
-            padding: 0 0.75rem 0 0.75rem;
-            height: 2rem;
-            display: flex;
-            align-items: center;
-            border: 1px solid var(--border);
-            transition: all 0.2s;
-        }
-
-        .model-badge:hover {
-            border-color: var(--text-secondary);
-            background: var(--surface-hover);
-        }
-
-        .model-select {
-            appearance: none;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            font-size: 0.75rem;
-            font-weight: 500;
-            width: 100%;
-            cursor: pointer;
-            outline: none;
-            padding-right: 0.25rem;
-        }
-
-        .model-select:hover {
-            color: var(--text-primary);
-        }
-
-        .chevron {
-            font-size: 0.5rem;
-            color: var(--text-muted);
-            pointer-events: none;
-            margin-left: 0.25rem;
-        }
-
-        .action-btn {
-            width: 2.25rem;
-            height: 2.25rem;
+        /* --- Send Button --- */
+        .send-btn {
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            flex-shrink: 0;
+            outline: none;
         }
 
-        .action-btn.send {
-            background: var(--text-primary); /* White/Black input contrast */
-            color: var(--surface-primary);
+        .send-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: transparent;
         }
 
-        .action-btn.send:hover:not(:disabled) {
-            transform: scale(1.05);
-            box-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+        .send-btn:not(:disabled):hover {
+            background: var(--accent);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .send-btn.stop {
+            background: rgba(255, 59, 48, 0.2);
+            color: #ff3b30;
+        }
+
+        .send-btn.stop:hover {
+            background: #ff3b30;
+            color: white;
+        }
+
+        /* --- Custom Model Selector --- */
+        .model-selector {
+            position: relative;
+        }
+
+        .model-trigger {
+            height: 32px;
+            padding: 0 12px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .model-trigger:hover, .model-trigger.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .chevron {
+            font-size: 0.6rem;
+            opacity: 0.5;
+            transition: transform 0.2s;
         }
         
-        /* In light mode, reverse the contrast */
-        :host-context(html:not(.dark)) .action-btn.send {
-            background: var(--surface-primary);
-            color: var(--text-primary);
+        .model-trigger.active .chevron {
+            transform: rotate(180deg);
         }
 
-        .action-btn.send:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+        .model-dropdown {
+            position: absolute;
+            bottom: 110%;
+            right: 0;
+            background: rgba(30, 30, 35, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 6px;
+            min-width: 180px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            transform-origin: bottom right;
+            animation: springUp 0.3s var(--spring-ease);
+        }
+        
+        @keyframes springUp {
+            from { opacity: 0; transform: scale(0.9) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        .action-btn.stop {
-            background: var(--surface-tertiary);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
+        .model-option {
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            transition: all 0.1s;
         }
 
-        .action-btn.stop:hover {
-            border-color: #ef4444;
-            color: #ef4444;
-            background: rgba(239, 68, 68, 0.1);
+        .model-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
         }
-
-        .btn-icon {
-            font-size: 0.75rem;
+        
+        /* Backdrop to handle click-outside */
+        .fixed-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 10;
+            cursor: default;
         }
 
         .input-footer {
             display: flex;
             justify-content: center;
             gap: 1rem;
-            margin-top: 0.75rem;
-            opacity: 0.6;
+            margin-top: 1rem;
+            opacity: 0.5;
             transition: opacity 0.2s;
         }
 
         .input-surface:focus-within + .input-footer {
-            opacity: 1;
+            opacity: 0.9;
         }
 
         .footer-tip {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
         }
 
@@ -244,6 +294,7 @@ export class InputAreaComponent {
 
     text = '';
     selectedModel = 'deepseek-r1';
+    dropdownOpen = false;
 
     @ViewChild('textArea') textArea!: ElementRef<HTMLTextAreaElement>;
 
@@ -261,9 +312,18 @@ export class InputAreaComponent {
         this.sendMessage.emit(trimmed);
         this.text = '';
 
-        // Reset textarea height
         if (this.textArea) {
             this.textArea.nativeElement.style.height = 'auto';
         }
+    }
+
+    toggleDropdown() {
+        this.dropdownOpen = !this.dropdownOpen;
+    }
+
+    selectModel(model: string) {
+        this.selectedModel = model;
+        this.modelChange.emit(model);
+        this.dropdownOpen = false;
     }
 }
