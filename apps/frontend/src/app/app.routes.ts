@@ -1,19 +1,14 @@
 import { Routes } from '@angular/router';
+import { ChatWindowComponent } from './features/chat/components/chat-window/chat-window.component';
 
 export const routes: Routes = [
     {
         path: '',
-        loadComponent: () =>
-            import('./features/chat/components/chat-window/chat-window.component').then(
-                (m) => m.ChatWindowComponent,
-            ),
+        component: ChatWindowComponent,
     },
     {
         path: 'chat/:id',
-        loadComponent: () =>
-            import('./features/chat/components/chat-window/chat-window.component').then(
-                (m) => m.ChatWindowComponent,
-            ),
+        component: ChatWindowComponent,
     },
     { path: '**', redirectTo: '' },
 ];

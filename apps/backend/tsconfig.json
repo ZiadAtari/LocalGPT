@@ -18,11 +18,9 @@
         "strictBindCallApply": true,
         "forceConsistentCasingInFileNames": true,
         "noFallthroughCasesInSwitch": true,
-        "paths": {
-            "@shared/*": [
-                "../../libs/shared-types/*"
-            ]
-        }
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/**/*"
