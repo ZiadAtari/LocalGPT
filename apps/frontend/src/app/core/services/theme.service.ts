@@ -2,14 +2,35 @@
  * Theme Service
  * =============
  * Manages Dark/Light mode toggling.
- * Based on: Docs/Apps/Client/SpecSheet.md § 6 (core/services)
+ * Persists preference to localStorage.
  */
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-    // TODO: Implement:
-    //   toggleTheme(): void
-    //   getCurrentTheme(): 'dark' | 'light'
-    //   Persist preference to localStorage
+    private readonly STORAGE_KEY = 'localgpt-theme';
+    isDark = signal(true);
+
+    constructor() {
+        const stored = localStorage.getItem(this.STORAGE_KEY);
+        if (stored) {
+            this.isDark.set(stored === 'dark');
+        }
+        this.applyTheme();
+    }
+
+    toggle(): void {
+        this.isDark.update((v) => !v);
+        this.applyTheme();
+        localStorage.setItem(this.STORAGE_KEY, this.isDark() ? 'dark' : 'light');
+    }
+
+    private applyTheme(): void {
+        const html = document.documentElement;
+        if (this.isDark()) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+    }
 }

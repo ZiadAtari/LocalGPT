@@ -1,0 +1,62 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Build Artifacts
+dist/
+build/
+out/
+coverage/
+
+# Angular
+.angular/
+.sass-cache/
+connect.lock
+coverage/
+lib/
+testem.log
+.project
+.classpath
+.settings/
+
+# NestJS
+dist/
+
+# Environment Variables
+.env
+.env.production
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project Specific - Local Data Volumes
+# We ignore the contents of these directories as they contain runtime data
+data/db/*
+!data/db/.gitkeep
+!data/db/README.md
+
+data/uploads/*
+!data/uploads/.gitkeep
+!data/uploads/README.md
+
+data/vectors/*
+!data/vectors/.gitkeep
+!data/vectors/README.md
+
+data/ollama/*
+!data/ollama/.gitkeep
+!data/ollama/README.md
+
+# Logs
+logs/
+*.log
