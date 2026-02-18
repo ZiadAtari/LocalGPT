@@ -5,10 +5,10 @@
     "description": "LocalGPT Middleware (Tier 2) - NestJS",
     "scripts": {
         "build": "nest build",
-        "start": "nest start",
-        "start:dev": "nest start --watch",
-        "start:debug": "nest start --debug --watch",
-        "start:prod": "node dist/main",
+        "start": "node --max-old-space-size=8192 dist/main",
+        "start:dev": "set NODE_OPTIONS=--max-old-space-size=8192 && nest start --watch",
+        "start:debug": "set NODE_OPTIONS=--max-old-space-size=8192 && nest start --debug --watch",
+        "start:prod": "node --max-old-space-size=8192 dist/main",
         "db:migrate": "npx prisma migrate dev",
         "db:generate": "npx prisma generate",
         "db:studio": "npx prisma studio"
@@ -22,9 +22,13 @@
         "@types/uuid": "^10.0.0",
         "chromadb": "^1.7.0",
         "ollama": "^0.5.0",
+        "p-map": "^7.0.4",
         "pdf-parse": "1.1.1",
+        "pdfjs-dist": "^5.4.624",
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.8.0",
+        "sharp": "^0.34.5",
+        "skia-canvas": "^3.0.8",
         "uuid": "^13.0.0"
     },
     "devDependencies": {

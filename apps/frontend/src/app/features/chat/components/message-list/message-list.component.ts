@@ -21,8 +21,15 @@ interface ChatMessage {
     thoughtProcess: string;
     isStreaming: boolean;
     timestamp: Date;
+    attachments?: { name: string; size: string }[];
 }
 
+/**
+ * Message List Component
+ * ======================
+ * Scrollable list of messages with auto-scroll on new messages.
+ * Dumb component.
+ */
 @Component({
     selector: 'app-message-list',
     standalone: true,
@@ -46,7 +53,8 @@ interface ChatMessage {
                             [thought]="msg.thoughtProcess"
                             [streaming]="msg.isStreaming"
                             [timestamp]="msg.timestamp"
-                        />
+                            [attachments]="msg.attachments || []"
+                            />
                     }
                 </div>
             }
@@ -137,13 +145,6 @@ interface ChatMessage {
         }
     `],
 })
-/**
- * Message List Component
- * ======================
- * Scrollable list of messages with auto-scroll on new messages.
- * Dumb component.
- */
-@Component({ ... })
 export class MessageListComponent implements AfterViewChecked {
     messages = input<ChatMessage[]>([]);
 

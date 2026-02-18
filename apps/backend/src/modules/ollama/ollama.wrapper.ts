@@ -90,13 +90,67 @@ export class OllamaWrapper implements OnModuleInit {
 
     /**
      * Generate embeddings for a text string.
+     * Includes defensive validation against malformed Ollama responses.
      */
+    private embedDimensionLogged = false;
+
     async embed(text: string, model = 'nomic-embed-text'): Promise<number[]> {
         const response = await this.client.embed({
             model,
             input: text,
         });
-        return response.embeddings[0];
+
+        // Defensive: validate the response shape
+        if (!response?.embeddings || !Array.isArray(response.embeddings) || response.embeddings.length === 0) {
+            this.logger.error(`Ollama embed returned invalid response: ${JSON.stringify(response).slice(0, 200)}`);
+            throw new Error(`Embedding model "${model}" returned no embeddings`);
+        }
+
+        const embedding = response.embeddings[0];
+
+        if (!Array.isArray(embedding) || embedding.length === 0) {
+            this.logger.error(`Embedding[0] is invalid: type=${typeof embedding}, length=${embedding?.length}`);
+            throw new Error(`Embedding model "${model}" returned invalid embedding vector`);
+        }
+
+        // Log dimension once for diagnostics
+        if (!this.embedDimensionLogged) {
+            this.logger.log(`Embedding dimension: ${embedding.length} (model: ${model})`);
+            this.embedDimensionLogged = true;
+        }
+
+        return embedding;
+    }
+
+    /**
+     * Generate text from an image using a vision/OCR model.
+     * Sends the image as base64 along with a text prompt.
+     *
+     * @param prompt       - The instruction prompt (e.g., "Extract all text as Markdown")
+     * @param imageBuffer  - Raw PNG/JPEG image buffer
+     * @param model        - Vision model identifier (default: 'deepseek-ocr')
+     * @returns The full generated text response
+     */
+    async generateFromImage(
+        prompt: string,
+        imageBuffer: Buffer,
+        model = 'deepseek-ocr',
+    ): Promise<string> {
+        const base64Image = imageBuffer.toString('base64');
+
+        const response = await this.client.generate({
+            model,
+            prompt,
+            images: [base64Image],
+            stream: false,
+            keep_alive: '60m',
+            options: {
+                num_ctx: 8192,
+                temperature: 0.1, // Low temp for accurate extraction
+            },
+        });
+
+        return response.response;
     }
 
     /**

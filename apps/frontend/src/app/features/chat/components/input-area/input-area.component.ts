@@ -14,6 +14,12 @@ export interface AttachedFile {
     status: 'pending' | 'uploading' | 'ready' | 'error';
 }
 
+/**
+ * Input Area Component
+ * ====================
+ * Text input with send button, model selector, and file attachment.
+ * Dumb component — emits events, doesn't know about services.
+ */
 @Component({
     selector: 'app-input-area',
     standalone: true,
@@ -474,20 +480,13 @@ export interface AttachedFile {
         }
     `],
 })
-/**
- * Input Area Component
- * ====================
- * Text input with send button, model selector, and file attachment.
- * Dumb component — emits events, doesn't know about services.
- */
-@Component({ ... })
 export class InputAreaComponent {
     // Inputs from Smart Parent
     isStreaming = input(false);
     models = input<string[]>(['deepseek-r1']);
 
     // Outputs to Smart Parent
-    sendMessage = output<string>();
+    sendMessage = output<{ message: string; attachments: AttachedFile[] }>();
     stopRequest = output<void>();
     modelChange = output<string>();
     fileAttached = output<File>();
@@ -513,19 +512,41 @@ export class InputAreaComponent {
 
     /**
      * Emits the message to the parent and clears local input.
+     * Attachments are NOT cleared here — they persist until the parent
+     * signals that processing is complete (via status updates).
      * Also auto-resizes the textarea back to default.
      */
     send(): void {
         const trimmed = this.text.trim();
         if (!trimmed && this.attachments.length === 0) return;
 
-        this.sendMessage.emit(trimmed || '(File attached)');
+        this.sendMessage.emit({
+            message: trimmed || '(File attached)',
+            attachments: [...this.attachments],
+        });
+
         this.text = '';
-        this.attachments = [];
+        this.attachments = []; // Clear after sending
 
         if (this.textArea) {
             this.textArea.nativeElement.style.height = 'auto';
         }
+    }
+
+    /**
+     * Called by the parent to update an attachment's status after backend processing.
+     */
+    updateAttachmentStatus(filename: string, status: 'ready' | 'error'): void {
+        this.attachments = this.attachments.map(att =>
+            att.name === filename ? { ...att, status } : att,
+        );
+    }
+
+    /**
+     * Clears all completed (ready) attachments from the UI.
+     */
+    clearReadyAttachments(): void {
+        this.attachments = this.attachments.filter(att => att.status !== 'ready');
     }
 
     toggleDropdown() {

@@ -58,12 +58,41 @@ let OllamaWrapper = OllamaWrapper_1 = class OllamaWrapper {
             yield chunk;
         }
     }
+    embedDimensionLogged = false;
     async embed(text, model = 'nomic-embed-text') {
         const response = await this.client.embed({
             model,
             input: text,
         });
-        return response.embeddings[0];
+        if (!response?.embeddings || !Array.isArray(response.embeddings) || response.embeddings.length === 0) {
+            this.logger.error(`Ollama embed returned invalid response: ${JSON.stringify(response).slice(0, 200)}`);
+            throw new Error(`Embedding model "${model}" returned no embeddings`);
+        }
+        const embedding = response.embeddings[0];
+        if (!Array.isArray(embedding) || embedding.length === 0) {
+            this.logger.error(`Embedding[0] is invalid: type=${typeof embedding}, length=${embedding?.length}`);
+            throw new Error(`Embedding model "${model}" returned invalid embedding vector`);
+        }
+        if (!this.embedDimensionLogged) {
+            this.logger.log(`Embedding dimension: ${embedding.length} (model: ${model})`);
+            this.embedDimensionLogged = true;
+        }
+        return embedding;
+    }
+    async generateFromImage(prompt, imageBuffer, model = 'deepseek-ocr') {
+        const base64Image = imageBuffer.toString('base64');
+        const response = await this.client.generate({
+            model,
+            prompt,
+            images: [base64Image],
+            stream: false,
+            keep_alive: '60m',
+            options: {
+                num_ctx: 8192,
+                temperature: 0.1,
+            },
+        });
+        return response.response;
     }
     async listModels() {
         return this.client.list();

@@ -70,7 +70,10 @@ export class VectorStoreService implements OnModuleInit {
      * Add document chunks with their embeddings.
      */
     addEntries(entries: VectorEntry[]): void {
-        this.entries.push(...entries);
+        // Use loop instead of spread to avoid RangeError with large arrays
+        for (const entry of entries) {
+            this.entries.push(entry);
+        }
         this.persist();
         this.logger.log(`Added ${entries.length} vectors (total: ${this.entries.length})`);
     }

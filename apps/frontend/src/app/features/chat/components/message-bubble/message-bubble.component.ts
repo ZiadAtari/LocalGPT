@@ -7,6 +7,12 @@
 import { Component, input, ChangeDetectionStrategy, computed } from '@angular/core';
 import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.component';
 
+/**
+ * Message Bubble Component
+ * ========================
+ * Renders a single chat message (user or assistant).
+ * Dumb component — receives data via input.
+ */
 @Component({
     selector: 'app-message-bubble',
     standalone: true,
@@ -40,6 +46,21 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
                             [innerHTML]="renderedContent()"
                         ></div>
                     </div>
+
+                    @if (attachments().length > 0) {
+                        <div class="attachment-tags">
+                            @for (att of attachments(); track att.name) {
+                                <div class="attachment-tag">
+                                    <svg class="att-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                    </svg>
+                                    <span class="att-name">{{ att.name }}</span>
+                                    <span class="att-size">{{ att.size }}</span>
+                                </div>
+                            }
+                        </div>
+                    }
                     
                     <div class="message-meta">
                         {{ timeLabel() }}
@@ -163,21 +184,54 @@ import { ThinkingBubbleComponent } from '../thinking-bubble/thinking-bubble.comp
             margin-top: 4px;
             padding: 0 4px;
         }
+
+        .attachment-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .attachment-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+        }
+
+        .att-icon {
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+
+        .att-name {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .att-size {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.7rem;
+        }
     `],
 })
-/**
- * Message Bubble Component
- * ========================
- * Renders a single chat message (user or assistant).
- * Dumb component — receives data via input.
- */
-@Component({ ... })
 export class MessageBubbleComponent {
     role = input<'user' | 'assistant' | 'system'>('user');
     content = input('');
     thought = input('');
     streaming = input(false);
     timestamp = input(new Date());
+    attachments = input<{ name: string; size: string }[]>([]);
 
     isUser = computed(() => this.role() === 'user');
 

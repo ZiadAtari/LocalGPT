@@ -40,7 +40,9 @@ export interface DocumentMetadata {
     documentId: string;
     filename: string;
     chunkCount: number;
-    status: 'processing' | 'ready' | 'failed';
+    pageCount: number;
+    status: 'processing' | 'ocr' | 'embedding' | 'ready' | 'failed';
+    progress: number;
     error?: string;
     createdAt: string;
 }

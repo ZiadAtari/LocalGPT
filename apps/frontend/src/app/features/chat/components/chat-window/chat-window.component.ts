@@ -7,13 +7,19 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ChatStore } from '../../chat.store';
+import { ChatStore, MessageAttachment } from '../../chat.store';
 import { StreamService, StreamPacket } from '../../../../core/services/stream.service';
 import { ApiService, ConversationSummary } from '../../../../core/services/api.service';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { MessageListComponent } from '../message-list/message-list.component';
 import { InputAreaComponent } from '../input-area/input-area.component';
 
+/**
+ * Chat Window Component (Smart Container)
+ * ========================================
+ * The main chat view — owns the conversation lifecycle.
+ * Connects: ChatStore, StreamService, ApiService, ThemeService.
+ */
 @Component({
   selector: 'app-chat-window',
   standalone: true,
@@ -184,7 +190,7 @@ import { InputAreaComponent } from '../input-area/input-area.component';
             text-align: left;
             cursor: pointer;
             transition: background 0.2s;
-             color: var(--text-secondary);
+            color: var(--text-secondary);
         }
 
         .conv-item:hover {
@@ -281,13 +287,6 @@ import { InputAreaComponent } from '../input-area/input-area.component';
         }
     `],
 })
-/**
- * Chat Window Component (Smart Container)
- * ========================================
- * The main chat view — owns the conversation lifecycle.
- * Connects: ChatStore, StreamService, ApiService, ThemeService.
- */
-@Component({ ... })
 export class ChatWindowComponent implements OnInit, OnDestroy {
   store = inject(ChatStore);
   private stream = inject(StreamService);
@@ -365,7 +364,12 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
    * Creates a conversation if one doesn't exist, then triggers the stream.
    * @param message - The user's prompt
    */
-  onSend(message: string): void {
+  onSend(event: { message: string; attachments: any[] }): void {
+    const attachmentMeta: MessageAttachment[] = event.attachments.map(a => ({
+      name: a.name,
+      size: a.size,
+    }));
+
     // Auto-create conversation if none active
     if (!this.store.conversationId()) {
       this.api.initConversation().subscribe({
@@ -373,11 +377,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
           this.store.setConversation(conversationId);
           this.router.navigate(['/chat', conversationId]);
           this.loadConversations();
-          this.sendMessage(conversationId, message);
+          this.sendMessage(conversationId, event.message, attachmentMeta);
         },
       });
     } else {
-      this.sendMessage(this.store.conversationId()!, message);
+      this.sendMessage(this.store.conversationId()!, event.message, attachmentMeta);
     }
   }
 
@@ -396,6 +400,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
   /**
    * Handles file attachment from Input Area.
    * Uploads file immediately to the backend for RAG processing.
+   * Handles both synchronous (ready/failed) and async (processing/ocr) responses.
    * @param file - File object
    */
   onFileAttached(file: File): void {
@@ -404,6 +409,11 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
         if (doc.status === 'ready') {
           this.activeDocumentIds.push(doc.documentId);
           console.log(`📎 Document ready: ${doc.filename} (${doc.chunkCount} chunks)`);
+        } else if (doc.status === 'processing' || doc.status === 'ocr' || doc.status === 'embedding') {
+          // Backend accepted the file and is processing asynchronously
+          // The document ID is still valid — add it so it's available when the user sends
+          this.activeDocumentIds.push(doc.documentId);
+          console.log(`⏳ Document processing: ${doc.filename} (status: ${doc.status})`);
         } else if (doc.status === 'failed') {
           console.error(`❌ Document failed: ${doc.filename}`, doc.error);
         }
@@ -434,8 +444,8 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
    * 3. Connect to SSE Stream.
    * 4. Route incoming tokens to Store (appendToken / appendThought).
    */
-  private sendMessage(conversationId: string, message: string): void {
-    this.store.addUserMessage(message);
+  private sendMessage(conversationId: string, message: string, attachments?: MessageAttachment[]): void {
+    this.store.addUserMessage(message, attachments);
     this.store.startAssistantMessage();
 
     this.streamSub?.unsubscribe();
@@ -466,8 +476,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
         },
       });
 
-    // Clear active documents after sending
-    this.activeDocumentIds = [];
+    // Documents persist across messages — don't clear activeDocumentIds
   }
 
   private loadConversations(): void {

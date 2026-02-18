@@ -4,7 +4,9 @@ export interface DocumentMetadata {
     documentId: string;
     filename: string;
     chunkCount: number;
-    status: 'processing' | 'ready' | 'failed';
+    pageCount: number;
+    status: 'processing' | 'ocr' | 'embedding' | 'ready' | 'failed';
+    progress: number;
     error?: string;
     createdAt: string;
 }
@@ -18,6 +20,9 @@ export declare class FileProcessor {
     listDocuments(): DocumentMetadata[];
     getDocument(documentId: string): DocumentMetadata | undefined;
     removeDocument(documentId: string): boolean;
-    private extractPdf;
+    private extractPdfText;
+    private preprocessImage;
+    private postProcess;
     private chunkText;
+    private logMemory;
 }

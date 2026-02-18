@@ -44,7 +44,9 @@ let VectorStoreService = VectorStoreService_1 = class VectorStoreService {
         }
     }
     addEntries(entries) {
-        this.entries.push(...entries);
+        for (const entry of entries) {
+            this.entries.push(entry);
+        }
         this.persist();
         this.logger.log(`Added ${entries.length} vectors (total: ${this.entries.length})`);
     }

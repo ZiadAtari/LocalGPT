@@ -6,6 +6,11 @@
  */
 import { Injectable, signal, computed } from '@angular/core';
 
+export interface MessageAttachment {
+    name: string;
+    size: string;
+}
+
 export interface ChatMessage {
     id: string;
     role: 'user' | 'assistant' | 'system';
@@ -13,6 +18,7 @@ export interface ChatMessage {
     thoughtProcess: string;
     isStreaming: boolean;
     timestamp: Date;
+    attachments?: MessageAttachment[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -56,7 +62,7 @@ export class ChatStore {
      * Optimistically adds a user message to the UI.
      * @param content - The text entered by the user.
      */
-    addUserMessage(content: string): void {
+    addUserMessage(content: string, attachments?: MessageAttachment[]): void {
         const msg: ChatMessage = {
             id: crypto.randomUUID(),
             role: 'user',
@@ -64,6 +70,7 @@ export class ChatStore {
             thoughtProcess: '',
             isStreaming: false,
             timestamp: new Date(),
+            attachments: attachments?.length ? attachments : undefined,
         };
         this.messages.update((msgs) => [...msgs, msg]);
     }

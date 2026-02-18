@@ -6,6 +6,12 @@
  */
 import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 
+/**
+ * Thinking Bubble Component
+ * =========================
+ * Collapsible details element showing the model's reasoning process.
+ * Dumb component — receives content via input.
+ */
 @Component({
     selector: 'app-thinking-bubble',
     standalone: true,
@@ -120,13 +126,6 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
         }
     `],
 })
-/**
- * Thinking Bubble Component
- * =========================
- * Collapsible details element showing the model's reasoning process.
- * Dumb component — receives content via input.
- */
-@Component({ ... })
 export class ThinkingBubbleComponent {
     /** The raw text content of the reasoning process */
     content = input('');
